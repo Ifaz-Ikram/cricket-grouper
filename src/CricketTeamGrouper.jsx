@@ -116,61 +116,63 @@ const CricketTeamGrouper = () => {
           </div>
         </section>
 
-        <div className="card bg-base-100 border border-base-300 shadow-sm">
-          <div className="card-body space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <h2 className="card-title">Participating Teams</h2>
-            </div>
-
-            {error && (
-              <div className="alert alert-error">
-                <AlertCircle size={20} />
-                <span>{error}</span>
+        {!groups && (
+          <div className="card bg-base-100 border border-base-300 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="card-body space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <h2 className="card-title">Participating Teams</h2>
               </div>
-            )}
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {Object.entries(organizations).map(([orgName, org]) => (
-                <div key={org.id} className="card bg-base-200 border border-base-300 shadow-sm">
-                  <div className="card-body gap-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-lg">{orgName}</h3>
-                      <div className="badge badge-outline badge-secondary">
-                        {org.teams.length} teams
+              {error && (
+                <div className="alert alert-error">
+                  <AlertCircle size={20} />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <div className="grid gap-4 md:grid-cols-2">
+                {Object.entries(organizations).map(([orgName, org]) => (
+                  <div key={org.id} className="card bg-base-200 border border-base-300 shadow-sm">
+                    <div className="card-body gap-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-lg">{orgName}</h3>
+                        <div className="badge badge-outline badge-secondary">
+                          {org.teams.length} teams
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {org.teams.map((teamName) => (
+                          <div key={teamName} className="card bg-base-100 border border-primary">
+                            <div className="card-body p-3">
+                              {teamName}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      {org.teams.map((teamName) => (
-                        <div key={teamName} className="card bg-base-100 border border-primary">
-                          <div className="card-body p-3">
-                            {teamName}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-
-            {teamCountIsValid ? (
-              <button
-                onClick={solveGrouping}
-                disabled={solving}
-                className={`btn btn-primary btn-lg w-full ${solving ? 'loading' : ''}`}
-              >
-                {!solving && <Shuffle size={20} />}
-                {solving ? 'Drawing groups...' : 'Draw groups'}
-              </button>
-            ) : (
-              <div className="alert alert-warning">
-                <AlertCircle size={20} />
-                <span>You have {allTeams.length} teams. Exactly 20 teams are required.</span>
+                ))}
               </div>
-            )}
+
+              {teamCountIsValid ? (
+                <button
+                  onClick={solveGrouping}
+                  disabled={solving}
+                  className={`btn btn-primary btn-lg w-full ${solving ? 'loading' : ''}`}
+                >
+                  {!solving && <Shuffle size={20} />}
+                  {solving ? 'Drawing groups...' : 'Draw groups'}
+                </button>
+              ) : (
+                <div className="alert alert-warning">
+                  <AlertCircle size={20} />
+                  <span>You have {allTeams.length} teams. Exactly 20 teams are required.</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {groups && (
           <div className="card bg-base-100 border border-base-300 shadow-sm">
