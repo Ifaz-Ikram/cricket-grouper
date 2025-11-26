@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shuffle, RefreshCw, AlertCircle, Shield, CheckCircle2, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { organizationsData } from '../data/organizationsData';
 
 const Groups = () => {
@@ -47,6 +48,8 @@ const Groups = () => {
 
     setSolving(true);
     setError('');
+    // Clear groups to trigger the animation from pool to groups
+    setGroups(null);
 
     setTimeout(() => {
       const initialGroups = [[], [], [], []];
@@ -62,7 +65,7 @@ const Groups = () => {
       }
 
       setSolving(false);
-    }, 900);
+    }, 1500); // Increased delay slightly for effect
   };
 
   const groupColors = [
@@ -88,6 +91,54 @@ const Groups = () => {
     "Codegen International(PVT) Limited": "/CodeGen.png",
     "CSE": "/CSE.avif"
   };
+
+  const TeamCard = ({ team, index, isGroupView = false }) => (
+    <motion.div
+      layoutId={`team-${team.name}`}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      transition={{
+        type: "spring",
+        stiffness: 350,
+        damping: 25,
+        layout: { duration: 0.8 } // Slower layout transition for the "flying" effect
+      }}
+      className={`flex items-center justify-between rounded-xl border border-white/5 bg-white/5 px-4 py-3 hover:bg-white/10 hover:border-white/10 transition-colors duration-200 group ${!isGroupView ? 'h-full' : ''}`}
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        {/* Rank/Number - Only show in Group View */}
+        {isGroupView && (
+          <div className={`w-8 h-8 rounded-lg bg-white/10 text-white/70 font-bold flex items-center justify-center flex-shrink-0 text-sm`}>
+            {String.fromCharCode(65 + index)}
+          </div>
+        )}
+
+        {/* Logo */}
+        <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1">
+          {organizationLogos[team.org] ? (
+            <img
+              src={organizationLogos[team.org]}
+              alt={team.org}
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <Shield size={16} className="text-htg-primary" />
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0 text-left">
+          <div className="font-bold text-white text-sm md:text-base truncate">{team.name}</div>
+          <div className="text-xs font-semibold text-htg-text-muted uppercase tracking-wide truncate">
+            {team.org}
+          </div>
+        </div>
+      </div>
+      {isGroupView && (
+        <CheckCircle2 size={20} className="text-htg-primary flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+      )}
+    </motion.div>
+  );
 
   return (
     <div className="min-h-screen pt-28 pb-24">
@@ -179,88 +230,81 @@ const Groups = () => {
           </div>
         )}
 
-        {/* Groups Display */}
-        {groups && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
-            {groups.map((group, groupIndex) => {
-              const colorScheme = groupColors[groupIndex];
-              const groupLabel = groupIndex + 1;
+        {/* Main Content Area - AnimatePresence handles the switch between Pool and Groups */}
+        <AnimatePresence mode="wait">
+          {!groups ? (
+            /* Team Pool View */
+            <motion.div
+              key="pool"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-px flex-1 bg-white/10"></div>
+                <span className="text-white/50 text-sm font-medium uppercase tracking-wider">Team Pool</span>
+                <div className="h-px flex-1 bg-white/10"></div>
+              </div>
 
-              return (
-                <div
-                  key={groupIndex}
-                  className={`glass-card rounded-3xl border ${colorScheme.border} overflow-hidden`}
-                  style={{ animationDelay: `${groupIndex * 0.1}s` }}
-                >
-                  {/* Group Header */}
-                  <div className={`bg-gradient-to-r ${colorScheme.bg} p-6 relative overflow-hidden`}>
-                    <div className="absolute inset-0 bg-black/10"></div>
-                    <div className="relative flex items-center justify-between z-10">
-                      <div>
-                        <p className="text-white/80 text-xs uppercase tracking-wider font-semibold mb-1">Group</p>
-                        <h3 className="text-4xl font-black text-white">{groupLabel}</h3>
-                      </div>
-                      <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 backdrop-blur-md border border-white/30">
-                        <Shield size={20} className="text-white" />
-                        <span className="text-white font-bold text-lg">{group.length}/5</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {allTeams.map((team, index) => (
+                  <TeamCard key={team.name} team={team} index={index} isGroupView={false} />
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            /* Groups View */
+            <motion.div
+              key="groups"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            >
+              {groups.map((group, groupIndex) => {
+                const colorScheme = groupColors[groupIndex];
+                const groupLabel = groupIndex + 1;
+
+                return (
+                  <motion.div
+                    key={groupIndex}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: groupIndex * 0.1 }}
+                    className={`glass-card rounded-3xl border ${colorScheme.border} overflow-hidden flex flex-col`}
+                  >
+                    {/* Group Header */}
+                    <div className={`bg-gradient-to-r ${colorScheme.bg} p-6 relative overflow-hidden`}>
+                      <div className="absolute inset-0 bg-black/10"></div>
+                      <div className="relative flex items-center justify-between z-10">
+                        <div>
+                          <p className="text-white/80 text-xs uppercase tracking-wider font-semibold mb-1">Group</p>
+                          <h3 className="text-4xl font-black text-white">{groupLabel}</h3>
+                        </div>
+                        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 backdrop-blur-md border border-white/30">
+                          <Shield size={20} className="text-white" />
+                          <span className="text-white font-bold text-lg">{group.length}/5</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Teams List */}
-                  <div className="p-6 space-y-3">
-                    {group.map((team, teamIndex) => (
-                      <div
-                        key={teamIndex}
-                        className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 px-4 py-4 hover:bg-white/10 hover:border-white/10 transition-all duration-200 group"
-                      >
-                        <div className="flex items-center gap-4 flex-1 min-w-0">
-                          {/* Rank/Number */}
-                          <div className={`w-8 h-8 rounded-lg bg-white/10 text-white/70 font-bold flex items-center justify-center flex-shrink-0 text-sm`}>
-                            {String.fromCharCode(65 + teamIndex)}
-                          </div>
-
-                          {/* Logo */}
-                          <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1">
-                            {organizationLogos[team.org] ? (
-                              <img
-                                src={organizationLogos[team.org]}
-                                alt={team.org}
-                                className="w-full h-full object-contain"
-                              />
-                            ) : (
-                              <Shield size={16} className="text-htg-primary" />
-                            )}
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold text-white text-lg truncate">{team.name}</div>
-                            <div className="text-xs font-semibold text-htg-text-muted uppercase tracking-wide truncate">
-                              {team.org}
-                            </div>
-                          </div>
-                        </div>
-                        <CheckCircle2 size={20} className="text-htg-primary flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!groups && !solving && (
-          <div className="text-center py-16 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white/5 mb-6 border border-white/10">
-              <Shuffle size={48} className="text-htg-text-muted" />
-            </div>
-            <p className="text-xl text-htg-text-muted font-medium">
-              Ready to create balanced groups? Click "Start Draw" above.
-            </p>
-          </div>
-        )}
+                    {/* Teams List */}
+                    <div className="p-6 space-y-3 flex-1">
+                      {group.map((team, teamIndex) => (
+                        <TeamCard
+                          key={team.name}
+                          team={team}
+                          index={teamIndex}
+                          isGroupView={true}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
